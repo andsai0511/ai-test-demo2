@@ -1,0 +1,93 @@
+name: 'AI Generate Unit Test'
+description: 'Reviews GitHub pull requests using AI bots (Gemini, Ollama, or others) and Generate Unit Test.'
+author: 'Narmada Rajendran'
+inputs:
+  LLM_URL:
+    description: 'URL for the LLM (e.g., Ollama, Gemini)'
+    required: true
+  LLM_KEY:
+    description: 'Token for the LLM (if required)'
+    required: false
+  LLM_MODEL:
+    description: 'Model name for the LLM'
+    required: true
+  GITHUB_TOKEN:
+    description: 'GitHub Token for API access'
+    required: true
+  REPO_OWNER:
+    description: 'Repository owner'
+    required: true
+  REPO_NAME:
+    description: 'Repository name'
+    required: true
+  BRANCH_NAME:
+    description: 'Head ref for diff'
+    required: true
+  MASTER_BRANCH_NAME:
+    description: 'Base ref for diff'
+    required: true
+  TARGET_EXTENSIONS:
+    description: 'Target file extensions to review (e.g., .py, .js)'
+    required: false
+  BOT:
+    description: "Bot name to use (e.g., gemini, ollama, chatgpt)"
+    required: false
+    default: "gemini"
+  BUILD_TOOL:
+    description: 'The build tool to use (e.g., mvn, gradle, npm, pytest).'
+    required: true
+  GENERATE_MODE:
+    description: 'Generate test coverage for all files (e.g., FULL or PR).'
+    required: true
+  SRC_PATH:
+    description: 'Source path (e.g., src, src/main/java, src/main/scala, src/main/groovy).'
+    required: true
+  TEST_PATH:
+    description: 'Test path (e.g., test, src/test/java, src/test/scala, src/test/groovy).'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Set GitHub Path
+      run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
+      shell: bash
+      env:
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+    - name: Install dependencies
+      run: pip install -r ${GITHUB_ACTION_PATH}/requirements.txt
+      shell: bash
+      env:
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+    - name: Run Generate Unit Test Script
+      shell: bash
+      env:
+        REPO_OWNER: ${{ inputs.REPO_OWNER }}
+        REPO_NAME: ${{ inputs.REPO_NAME }}
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        BRANCH_NAME: ${{ inputs.BRANCH_NAME }}
+        MASTER_BRANCH_NAME: ${{ inputs.MASTER_BRANCH_NAME }}
+        LLM_KEY: ${{ inputs.LLM_KEY }}
+        LLM_URL: ${{ inputs.LLM_URL }}
+        LLM_MODEL: ${{ inputs.LLM_MODEL }}
+        TARGET_EXTENSIONS: ${{ inputs.TARGET_EXTENSIONS }}
+        BOT: ${{ inputs.BOT }}
+        BUILD_TOOL: ${{ inputs.BUILD_TOOL }}
+        GENERATE_MODE: ${{ inputs.GENERATE_MODE }}
+        SRC_PATH: ${{ inputs.SRC_PATH }}
+        TEST_PATH: ${{ inputs.TEST_PATH }}
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+      run: |
+        python ${GITHUB_ACTION_PATH}/src/github_test_coverage.py
+    # - name: Upload result as an artifact
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: AI-requests
+    #     path: output.txt
+    #     retention-days: 1
+branding:
+  icon: 'aperture'
+  color: 'blue'
